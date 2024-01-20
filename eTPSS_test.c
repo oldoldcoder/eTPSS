@@ -33,9 +33,9 @@ int main(int argc, char **argv){
     init_eTPSS(&c);
     /*-------Share---------*/
     BN_set_word(t1,1111);
-    BN_set_negative(t1,1);
+    BN_set_negative(t1,0);
     BN_set_word(t2,2222);
-    BN_set_negative(t2,1);
+    BN_set_negative(t2,0);
     if(et_Share(&a,t1) != ETPSS_SUCCESS){
         fprintf(stderr,"error in Share operation");
     }

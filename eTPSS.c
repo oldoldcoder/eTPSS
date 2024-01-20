@@ -58,20 +58,6 @@ static void et_refresh_x(eTPSS * a){
 
     // 判断负值然后刷新
     int neg_flag = 0;
-    char * x1;
-
-    x1 = BN_bn2dec(a->CS1.x);
-    fprintf(stdout,"0.init :a->CS1.x:%s\n",x1);
-    fflush(stdout);  // 刷新标准输出流
-    x1 = BN_bn2dec(a->CS2.x);
-    fprintf(stdout,"0.init :a->CS2.x:%s\n",x1);
-    fflush(stdout);  // 刷新标准输出流
-    x1 = BN_bn2dec(a->CS3.x);
-    fprintf(stdout,"0.init :a->CS3.x:%s\n",x1);
-    fflush(stdout);  // 刷新标准输出流
-
-
-
 
     BN_add(a->CS1.x,a->CS1.x,a->CS1.r1);
     if(BN_is_negative(a->CS1.x))
@@ -79,9 +65,7 @@ static void et_refresh_x(eTPSS * a){
     BN_set_negative(a->CS1.x,0);
     BN_nnmod(a->CS1.x,a->CS1.x,MOD,CTX);
     BN_set_negative(a->CS1.x,neg_flag);
-    x1 = BN_bn2dec(a->CS1.x);
-    fprintf(stdout,"1.add :a->CS1.x:%s\n",x1);
-    fflush(stdout);  // 刷新标准输出流
+
 
     BN_sub(a->CS1.x,a->CS1.x,a->CS1.r2);
     neg_flag = 0;
@@ -90,9 +74,7 @@ static void et_refresh_x(eTPSS * a){
     BN_set_negative(a->CS1.x,0);
     BN_nnmod(a->CS1.x,a->CS1.x,MOD,CTX);
     BN_set_negative(a->CS1.x,neg_flag);
-    x1 = BN_bn2dec(a->CS1.x);
-    fprintf(stdout,"2.sub :a->CS1.x:%s\n",x1);
-    fflush(stdout);  // 刷新标准输出流
+
     neg_flag = 0;
 
     BN_add(a->CS2.x,a->CS2.x,a->CS2.r1);
@@ -101,9 +83,7 @@ static void et_refresh_x(eTPSS * a){
     BN_set_negative(a->CS2.x,0);
     BN_nnmod(a->CS2.x,a->CS2.x,MOD,CTX);
     BN_set_negative(a->CS2.x,neg_flag);
-    x1 = BN_bn2dec(a->CS2.x);
-    fprintf(stdout,"1.add :a->CS2.x:%s\n",x1);
-    fflush(stdout);  // 刷新标准输出流
+
     BN_sub(a->CS2.x,a->CS2.x,a->CS2.r2);
     neg_flag = 0;
     if(BN_is_negative(a->CS2.x))
@@ -111,9 +91,7 @@ static void et_refresh_x(eTPSS * a){
     BN_set_negative(a->CS2.x,0);
     BN_nnmod(a->CS2.x,a->CS2.x,MOD,CTX);
     BN_set_negative(a->CS2.x,neg_flag);
-    x1 = BN_bn2dec(a->CS2.x);
-    fprintf(stdout,"2.sub :a->CS2.x:%s\n",x1);
-    fflush(stdout);  // 刷新标准输出流
+
     neg_flag = 0;
 
     BN_add(a->CS3.x,a->CS3.x,a->CS3.r1);
@@ -122,9 +100,7 @@ static void et_refresh_x(eTPSS * a){
     BN_set_negative(a->CS3.x,0);
     BN_nnmod(a->CS3.x,a->CS3.x,MOD,CTX);
     BN_set_negative(a->CS3.x,neg_flag);
-    x1 = BN_bn2dec(a->CS3.x);
-    fprintf(stdout,"1.add :a->CS3.x:%s\n",x1);
-    fflush(stdout);  // 刷新标准输出流
+
     BN_sub(a->CS3.x,a->CS3.x,a->CS3.r2);
     neg_flag = 0;
     if(BN_is_negative(a->CS3.x))
@@ -132,11 +108,7 @@ static void et_refresh_x(eTPSS * a){
     BN_set_negative(a->CS3.x,0);
     BN_nnmod(a->CS3.x,a->CS3.x,MOD,CTX);
     BN_set_negative(a->CS3.x,neg_flag);
-    x1 = BN_bn2dec(a->CS3.x);
-    fprintf(stdout,"2.sub :a->CS3.x:%s\n",x1);
-    fflush(stdout);  // 刷新标准输出流
     neg_flag = 0;
-    /**/
 }
 
 int init_eTPSS(eTPSS * var){
@@ -251,7 +223,7 @@ end:
 
 int et_Add(eTPSS *res,eTPSS * a,eTPSS *b){
 
-    int neg_flag[3];
+    int neg_flag[3] = {0};
     if(!BN_add(res->CS1.x,a->CS1.x,b->CS1.x) ||
     !BN_add(res->CS2.x,a->CS2.x,b->CS2.x) ||
     !BN_add(res->CS3.x,a->CS3.x,b->CS3.x)){
@@ -277,7 +249,7 @@ int et_Add(eTPSS *res,eTPSS * a,eTPSS *b){
 }
 
 int et_ScalP(eTPSS *res,eTPSS *var,BIGNUM *num){
-    int neg_flag[3];
+    int neg_flag[3] = {0};
     if(!BN_mul(res->CS1.x,var->CS1.x,num,CTX) ||
        !BN_mul(res->CS2.x,var->CS2.x,num,CTX) ||
        !BN_mul(res->CS3.x,var->CS3.x,num,CTX)){
