@@ -12,6 +12,7 @@
 #include <stdlib.h>
 /*---------define constant-----------*/
 #define N 64
+#define random_bits 32
 #define SEED 0xDEADBEEF
 #define ETPSS_ERROR -180607
 #define ETPSS_SUCCESS -180608
@@ -20,6 +21,7 @@
 /*-----------------------------------*/
 extern BIGNUM * MOD;
 extern BN_CTX * CTX;
+extern BIGNUM * RANDOM_RANGE;
 // 定义cli的结构
 typedef struct {
     BIGNUM *x;
@@ -87,5 +89,14 @@ int et_ScalP(eTPSS *res,eTPSS *var,BIGNUM * num);
  * @param res:乘法结果
  * */
 int et_Mul(eTPSS *res,eTPSS *a,eTPSS *b);
-
+/*
+ * @desc:eTPSS在不Recover情况下判断加密数据符号
+ * @param res:结果，res = 0 表示 d1是大于0,res = 1表示d1是小于0，res = -1表示d1等于0
+ * */
+int et_judge_symbols(int * res,eTPSS *d1);
+/*
+ * @desc:eTPSS的减法操作
+ * @param res:结果，res = 0 表示 d1是大于0,res = 1表示d1是小于0，res = -1表示d1等于0
+ * */
+int et_Sub(int *ret,eTPSS *d1,eTPSS *d2);
 #endif

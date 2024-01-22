@@ -16,9 +16,11 @@
 BIGNUM * MOD = NULL;
 // 全局ctx
 BN_CTX * CTX;
+BIGNUM * RANDOM_RANGE = NULL;
 // 随机数序列
 static BIGNUM * rand_array[3];
 int initialize_Constant() {
+
     CTX = BN_CTX_new();
     BN_CTX_start(CTX);
     MOD = BN_CTX_get(CTX);
@@ -27,6 +29,11 @@ int initialize_Constant() {
         BN_set_word(n , N);
         BN_set_word(MOD, 2);
         BN_exp(MOD, MOD, n, CTX); // 计算 2 的 n 次方，并将结果存储在 result 中
+
+        BN_set_word(n,random_bits);
+        BN_set_word(RANDOM_RANGE, 2);
+        BN_exp(RANDOM_RANGE, RANDOM_RANGE, n, CTX); // 计算 2 的 n 次方，并将结果存储在 result 中
+
         BN_free(n);
     } else {
        return BN_ERROR;
@@ -375,6 +382,132 @@ int et_Mul(eTPSS *res,eTPSS *a,eTPSS *b){
     BN_free(t1);
     BN_free(t2);
     BN_free(t3);
+
+    return ETPSS_SUCCESS;
+}
+// 判断etpss的符号,赋值给res
+int et_judge_symbols(int * res,eTPSS *d1){
+    int neg_flag = 0;
+    // 随机影响因子默认生成的值是2^64次方内的值
+    BIGNUM  * u1 = BN_CTX_get(CTX);
+    BIGNUM  * u2 = BN_CTX_get(CTX);
+    BIGNUM  * u3 = BN_CTX_get(CTX);
+    BIGNUM  * w1 = BN_CTX_get(CTX);
+    BIGNUM  * w2 = BN_CTX_get(CTX);
+
+    BIGNUM  * tmp = BN_CTX_get(CTX);
+    // 随机扰动值
+    BIGNUM  * r1 = BN_CTX_get(CTX);
+    BIGNUM  * r2 = BN_CTX_get(CTX);
+    BIGNUM  * x1 = d1->CS1.x;
+    BIGNUM  * x2 = d1->CS3.x;
+    BIGNUM  * x3 = d1->CS3.x;
+    BIGNUM  * z1 = BN_CTX_get(CTX);
+    BIGNUM  * z2 = BN_CTX_get(CTX);
+    BIGNUM  * z3 = BN_CTX_get(CTX);
+
+
+    if (!BN_rand_range(u1, RANDOM_RANGE)){
+        // 报错处理
+        fprintf(stderr,"Error in obtaining random values.\n");
+        return ETPSS_ERROR;
+    }
+    if (!BN_rand_range(u2, RANDOM_RANGE)){
+        // 报错处理
+        fprintf(stderr,"Error in obtaining random values.\n");
+        return ETPSS_ERROR;
+    }
+    // 对于负值的处理
+    BN_sub(w1,x1,u1);
+    if(BN_is_negative(w1))
+    {
+        neg_flag = 1;
+        BN_set_negative(w1,0);
+    }
+    BN_nnmod(w1,w1,MOD,CTX);
+    BN_set_negative(w1,neg_flag);
+    neg_flag = 0;
+
+    BN_sub(w2,x2,u2);
+    if(BN_is_negative(w2))
+    {
+        neg_flag = 1;
+        BN_set_negative(w2,0);
+    }
+    BN_nnmod(w2,w2,MOD,CTX);
+    BN_set_negative(w2,neg_flag);
+    neg_flag = 0;
+    /*--------打包w1，w2发送给CS3-------*/
+    BN_add(tmp,w1,w2);
+    BN_add(u3,x3,tmp);
+    if(BN_is_negative(u3))
+    {
+        neg_flag = 1;
+        BN_set_negative(u3,0);
+    }
+    BN_nnmod(u3,u3,MOD,CTX);
+    BN_set_negative(u3,neg_flag);
+    neg_flag = 0;
+    BN_sub(u3,u3,MOD);
+    // CS1和CS2生成一个共同的随机值r1
+    if (!BN_rand_range(r1, RANDOM_RANGE)){
+
+    }
+    // CS2和CS3生成一个共同的随机值r2
+    if (!BN_rand_range(r2, RANDOM_RANGE)){
+        // 报错处理
+        fprintf(stderr,"Error in obtaining random values.\n");
+        return ETPSS_ERROR;
+    }
+    // CS1计算u1 + r1
+    BN_add(z1,u1,r1);
+    // CS_3计算z_3=(z_1+u_3 )*α
+    BN_add(z1,z1,u3);
+    BN_mul(z3,z1,r2,CTX);
+    // CS_2计算z_2=(u_2-r)*α
+    BN_sub(tmp,u2,r1);
+    BN_mul(z2,tmp,r2,CTX);
+    /*-----------第四步-----------*/
+    int y = -1;
+    BN_add(tmp,z2,z3);
+    if(BN_is_zero(tmp)){
+        // 报告x等于0
+        *res = -1;
+    }
+
+    if(BN_is_negative(tmp)){
+        y = 1;
+    }else{
+        y = 0;
+    }
+    if(BN_is_negative(r2)){
+        *res = y ^ 1;
+    }else{
+        *res = y ^ 0;
+    }
+
+    return ETPSS_SUCCESS;
+}
+
+int et_Sub(int *ret,eTPSS *d1,eTPSS *d2){
+    int neg_flag = 0;
+    eTPSS t;
+    eTPSS res;
+    init_eTPSS(&t);
+    init_eTPSS(&res);
+    // 符号取反
+    t.CS1.x = d2->CS1.x;
+    BN_set_negative(t.CS1.x,BN_is_negative(t.CS1.x) ^ 1);
+    t.CS2.x = d2->CS2.x;
+    BN_set_negative(t.CS2.x,BN_is_negative(t.CS2.x) ^ 1);
+    t.CS3.x = d2->CS3.x;
+    BN_set_negative(t.CS3.x,BN_is_negative(t.CS3.x) ^ 1);
+    if(et_Add(&res,d1,&t) != ETPSS_SUCCESS){
+        return ETPSS_ERROR;
+    }
+    if(et_judge_symbols(ret,&res) != ETPSS_SUCCESS){
+        return ETPSS_ERROR;
+    }
     return ETPSS_SUCCESS;
 }
 
@@ -382,3 +515,4 @@ void free_BN_CTX(){
     BN_CTX_end(CTX);
     BN_CTX_free(CTX);
 }
+
