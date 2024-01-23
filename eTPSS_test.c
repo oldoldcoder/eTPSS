@@ -17,16 +17,14 @@ int main(int argc, char **argv){
     t3 = BN_CTX_get(ctx);
     // 初始化mod
     initialize_Constant();
-
-    /*BN_set_word(t1,1111);
+    BN_set_word(t2,3);
+    BN_set_word(t1,4);
     BN_set_negative(t1,1);
-    BN_set_word(t2,2222);
-    BN_set_negative(t2,1);
-    BN_mul(t3,t1,t2,CTX);
-    char * res = BN_bn2dec(t3);
+    BN_nnmod(t1,t1,t2,ctx);
+    char * res = BN_bn2dec(t1);
     fprintf(stdout,"res:%s",res);
-    fflush(stdout);*/
-
+    fflush(stdout);
+    BN_CTX * cttx = BN_CTX_new();
     eTPSS a,b,c;
     init_eTPSS(&a);
     init_eTPSS(&b);

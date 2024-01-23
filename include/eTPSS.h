@@ -12,16 +12,14 @@
 #include <stdlib.h>
 /*---------define constant-----------*/
 #define N 64
-#define random_bits 32
+#define random_bits 30
 #define SEED 0xDEADBEEF
 #define ETPSS_ERROR -180607
 #define ETPSS_SUCCESS -180608
 #define BN_ERROR -011013
 #define BN_SUCCESS -011012
 /*-----------------------------------*/
-extern BIGNUM * MOD;
-extern BN_CTX * CTX;
-extern BIGNUM * RANDOM_RANGE;
+
 // 定义cli的结构
 typedef struct {
     BIGNUM *x;
@@ -35,9 +33,14 @@ typedef struct {
     cli CS2;
     cli CS3;
     BN_CTX * ctx;
+    // 标记是否是通过乘法获得
     u_char is_multi_res;
+    // 标记是否是负值
+    u_char is_negative;
 } eTPSS;
-
+extern BIGNUM * MOD;
+extern BN_CTX * CTX;
+extern BIGNUM * RANDOM_RANGE;
 /*
  * @desc:初始化MOD的值
  * */
