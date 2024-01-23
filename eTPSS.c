@@ -114,13 +114,13 @@ int et_Share(eTPSS * var,BIGNUM * num){
         // 如果比负的mod还小
         BN_set_negative(MOD,1);
         if(BN_cmp(num,MOD) <= 0){
-            fprintf(stderr,"The value of num exceeds -（ 2 ^ 64）");
-            BN_set_negative(MOD,0);
+            fprintf(stderr,"The value of num exceeds -（ 2 ^ 64）\n");
             return ETPSS_ERROR;
         }
+        BN_set_negative(MOD,0);
     }else{
         if(BN_cmp(num,MOD) >= 0){
-            fprintf(stderr,"The value of num exceeds 2 ^ 64");
+            fprintf(stderr,"The value of num exceeds 2 ^ 64\n");
             return ETPSS_ERROR;
         }
     }
@@ -132,11 +132,12 @@ int et_Share(eTPSS * var,BIGNUM * num){
     BIGNUM * split3 = var->CS3.x;
 
     if(!BN_rand_range(split1,MOD)){
-        fprintf(stderr,"process of split have some trouble");
+
+        fprintf(stderr,"process of split have some trouble\n");
         goto end;
     }
     if(!BN_rand_range(split2,MOD)){
-        fprintf(stderr,"process of split have some trouble");
+        fprintf(stderr,"process of split have some trouble\n");
         goto end;
     }
     BN_sub(tmp,tmp,split1);
@@ -275,7 +276,7 @@ int et_Mul(eTPSS *res,eTPSS *a,eTPSS *b){
 
 // 判断etpss的符号,赋值给res
 int et_judge_symbols(int * res,eTPSS *d1){
-    int neg_flag = 0;
+
     // 随机影响因子默认生成的值是2^64次方内的值
     BIGNUM  * u1 = BN_CTX_get(CTX);
     BIGNUM  * u2 = BN_CTX_get(CTX);
@@ -334,11 +335,12 @@ int et_judge_symbols(int * res,eTPSS *d1){
     BN_sub(tmp,u2,r1);
     BN_mul(z2,tmp,r2,CTX);
     /*-----------第四步-----------*/
-    int y = -1;
+    int y;
     BN_add(tmp,z2,z3);
     if(BN_is_zero(tmp)){
         // 报告x等于0
         *res = -1;
+        return ETPSS_SUCCESS;
     }
 
     if(BN_is_negative(tmp)){
@@ -356,7 +358,6 @@ int et_judge_symbols(int * res,eTPSS *d1){
 }
 
 int et_Sub(int *ret,eTPSS *d1,eTPSS *d2){
-    int neg_flag = 0;
     eTPSS t;
     eTPSS res;
     init_eTPSS(&t);
@@ -371,6 +372,7 @@ int et_Sub(int *ret,eTPSS *d1,eTPSS *d2){
     if(et_Add(&res,d1,&t) != ETPSS_SUCCESS){
         return ETPSS_ERROR;
     }
+
     if(et_judge_symbols(ret,&res) != ETPSS_SUCCESS){
         return ETPSS_ERROR;
     }

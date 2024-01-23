@@ -99,7 +99,7 @@ int et_Mul(eTPSS *res,eTPSS *a,eTPSS *b);
 int et_judge_symbols(int * res,eTPSS *d1);
 /*
  * @desc:eTPSS的减法操作
- * @param res:结果，res = 0 表示 d1是大于0,res = 1表示d1是小于0，res = -1表示d1等于0
+ * @param res:结果，res = 0 表示 d1 大于 d2,res = 1表示d1小于d2，res = -1表示d1等于d2
  * */
 int et_Sub(int *ret,eTPSS *d1,eTPSS *d2);
 #endif
