@@ -35,8 +35,6 @@ typedef struct {
     BN_CTX * ctx;
     // 标记是否是通过乘法获得
     u_char is_multi_res;
-    // 标记是否是负值
-    u_char is_negative;
 } eTPSS;
 extern BIGNUM * MOD;
 extern BN_CTX * CTX;
@@ -102,4 +100,10 @@ int et_judge_symbols(int * res,eTPSS *d1);
  * @param res:结果，res = 0 表示 d1 大于 d2,res = 1表示d1小于d2，res = -1表示d1等于d2
  * */
 int et_Sub(int *ret,eTPSS *d1,eTPSS *d2);
+/*
+ * @desc:eTPSS的复制操作
+ * @param res:结果，res = 0 表示 d1 大于 d2,res = 1表示d1小于d2，res = -1表示d1等于d2
+ * */
+void et_Copy(eTPSS *to,eTPSS * from);
+
 #endif

@@ -17,10 +17,13 @@ BIGNUM * MOD = NULL;
 // 全局ctx
 BN_CTX * CTX;
 BIGNUM * RANDOM_RANGE = NULL;
+u_char is_init = 0;
 // 随机数序列
 static BIGNUM * rand_array[3];
 
 int initialize_Constant() {
+    if(is_init)
+        return ETPSS_SUCCESS;
     srand(time(0));
     CTX = BN_CTX_new();
     BN_CTX_start(CTX);
@@ -39,9 +42,10 @@ int initialize_Constant() {
 
         BN_free(n);
     } else {
-       return BN_ERROR;
+       return ETPSS_ERROR;
     }
-    return BN_SUCCESS;
+    is_init = 1;
+    return ETPSS_SUCCESS;
 }
 static void free_array(){
     BN_free(rand_array[0]);
@@ -87,7 +91,6 @@ int init_eTPSS(eTPSS * var){
     BN_CTX_start(var->ctx);
     // 初始化设定不是通过乘法获得
     var->is_multi_res = 0;
-    var->is_negative = 0;
     var->CS1.r1 = BN_CTX_get(var->ctx);
     var->CS1.r2 = BN_CTX_get(var->ctx);
     var->CS1.x = BN_CTX_get(var->ctx);
@@ -377,6 +380,20 @@ int et_Sub(int *ret,eTPSS *d1,eTPSS *d2){
         return ETPSS_ERROR;
     }
     return ETPSS_SUCCESS;
+}
+
+void et_Copy(eTPSS *d1,eTPSS * d2){
+    BN_copy(d1->CS1.x,d2->CS1.x);
+    BN_copy(d1->CS2.x ,d2->CS2.x);
+    BN_copy(d1->CS3.x ,d2->CS3.x);
+    BN_copy(d1->CS1.r1, d2->CS1.r1);
+    BN_copy(d1->CS2.r1, d2->CS2.r1);
+    BN_copy(d1->CS3.r1, d2->CS3.r1);
+
+    BN_copy(d1->CS1.r2, d2->CS1.r2);
+    BN_copy(d1->CS2.r2, d2->CS2.r2);
+    BN_copy(d1->CS3.r2, d2->CS3.r2);
+    d1->is_multi_res = d2->is_multi_res;
 }
 
 void free_BN_CTX(){

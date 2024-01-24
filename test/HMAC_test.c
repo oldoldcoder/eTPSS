@@ -1,8 +1,14 @@
 #include <stdio.h>
 #include <string.h>
 #include <openssl/hmac.h>
-
+#include <openssl/bn.h>
 int main() {
+
+    BIGNUM *te = BN_new();
+    BN_dec2bn(&te,"-123");
+    char * str = BN_bn2dec(te);
+    printf("te:%s",str);
+
     char key[] = "my_secret_key";
     char message[] = "Hello, HMAC!";
     unsigned char digest[EVP_MAX_MD_SIZE];
