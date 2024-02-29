@@ -65,7 +65,14 @@ int main(int argc, char **argv){
     char * str2 = BN_bn2dec(t2);
     fprintf(stdout,"[A = %s] + [B = %s] = C-->Recover value is %s\n",str1,str2,x1);
     fflush(stdout);  // 刷新标准输出流
-
+    printf("------------打印a，b的值----------------\n");
+    et_Recover(t3,&a);
+    x1 = BN_bn2dec(t3);
+    printf("A --> %s\n",x1);
+    et_Recover(t3,&b);
+    x1 = BN_bn2dec(t3);
+    printf("B --> %s\n",x1);
+    printf("--------------------------------------\n");
     /*---------Sub---------*/
     int ret = -9999;
     if(et_Sub(&ret,&a,&b) != ETPSS_SUCCESS){
@@ -91,6 +98,7 @@ int main(int argc, char **argv){
     fprintf(stdout,"%d * [A = -1111] = C-->Recover value is %s\n",t3n,x1);
     fflush(stdout);  // 刷新标准输出流
     /*---------et_Mul-----------*/
+
     if(et_Mul(&c,&a,&b) == ETPSS_ERROR){
         fprintf(stderr,"error in mul operation");
     }

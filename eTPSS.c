@@ -108,6 +108,7 @@ int init_eTPSS(eTPSS * var){
 int free_eTPSS(eTPSS * var){
     BN_CTX_end(var->ctx);
     BN_CTX_free(var->ctx);
+    return ETPSS_SUCCESS;
 }
 
 int et_Share(eTPSS * var,BIGNUM * num){
@@ -360,17 +361,17 @@ int et_judge_symbols(int * res,eTPSS *d1){
     return ETPSS_SUCCESS;
 }
 
-int et_Sub(int *ret,eTPSS *d1,eTPSS *d2){
+int et_Sub(int *ret, eTPSS *d1,eTPSS *d2){
     eTPSS t;
     eTPSS res;
     init_eTPSS(&t);
     init_eTPSS(&res);
     // 符号取反
-    t.CS1.x = d2->CS1.x;
+    BN_copy(t.CS1.x,d2->CS1.x);
     BN_set_negative(t.CS1.x,BN_is_negative(t.CS1.x) ^ 1);
-    t.CS2.x = d2->CS2.x;
+    BN_copy(t.CS2.x,d2->CS2.x);
     BN_set_negative(t.CS2.x,BN_is_negative(t.CS2.x) ^ 1);
-    t.CS3.x = d2->CS3.x;
+    BN_copy(t.CS3.x,d2->CS3.x);
     BN_set_negative(t.CS3.x,BN_is_negative(t.CS3.x) ^ 1);
     if(et_Add(&res,d1,&t) != ETPSS_SUCCESS){
         return ETPSS_ERROR;
@@ -379,6 +380,9 @@ int et_Sub(int *ret,eTPSS *d1,eTPSS *d2){
     if(et_judge_symbols(ret,&res) != ETPSS_SUCCESS){
         return ETPSS_ERROR;
     }
+    // 返还符号
+    free_eTPSS(&res);
+    free_eTPSS(&t);
     return ETPSS_SUCCESS;
 }
 
