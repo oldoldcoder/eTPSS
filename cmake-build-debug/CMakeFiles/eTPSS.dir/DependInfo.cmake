@@ -8,8 +8,8 @@ set(CMAKE_DEPENDS_LANGUAGES
 
 # The set of dependency files which are needed:
 set(CMAKE_DEPENDS_DEPENDENCY_FILES
-  "/tmp/tmp.fZfcRMM09j/eTPSS.c" "CMakeFiles/eTPSS.dir/eTPSS.c.o" "gcc" "CMakeFiles/eTPSS.dir/eTPSS.c.o.d"
-  "/tmp/tmp.fZfcRMM09j/eTPSS_test.c" "CMakeFiles/eTPSS.dir/eTPSS_test.c.o" "gcc" "CMakeFiles/eTPSS.dir/eTPSS_test.c.o.d"
+  "/root/heqi/encryption_algorithm/eTPSS/eTPSS.c" "CMakeFiles/eTPSS.dir/eTPSS.c.o" "gcc" "CMakeFiles/eTPSS.dir/eTPSS.c.o.d"
+  "/root/heqi/encryption_algorithm/eTPSS/eTPSS_test.c" "CMakeFiles/eTPSS.dir/eTPSS_test.c.o" "gcc" "CMakeFiles/eTPSS.dir/eTPSS_test.c.o.d"
   )
 
 # Targets to which this target links which contain Fortran sources.

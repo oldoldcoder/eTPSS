@@ -22,9 +22,10 @@ int main(int argc, char **argv){
     init_eTPSS(&b);
     init_eTPSS(&c);
     /*-------Share---------*/
-    BN_set_word(t1,2221);
+    BN_set_word(t1,-1111);
     //BN_set_negative(t1,1);
-    BN_set_word(t2,2222);
+    BN_set_word(t2,-2222);
+    char *str1 = BN_bn2dec(t1);
 
     if(et_Share(&a,t1) != ETPSS_SUCCESS){
         fprintf(stderr,"error in Share operation\n");
@@ -32,7 +33,7 @@ int main(int argc, char **argv){
     char *x1 = BN_bn2dec(a.CS1.x);
     char *x2 = BN_bn2dec(a.CS2.x);
     char *x3 = BN_bn2dec(a.CS3.x);
-    char *str1 = BN_bn2dec(t1);
+    str1 = BN_bn2dec(t1);
     fprintf(stdout,"[A]-->total:%s, x1:%s, x2:%s, x3:%s\n",str1,x1,x2,x3);
     fflush(stdout);  // 刷新标准输出流
     et_Share(&b,t2);
@@ -42,7 +43,19 @@ int main(int argc, char **argv){
     str1 = BN_bn2dec(t2);
     fprintf(stdout,"[B]-->total:%s, x1:%s, x2:%s, x3:%s\n",str1,x1,x2,x3);
     fflush(stdout);  // 刷新标准输出流
-    /*---------Recover---------*/
+
+    /*-----------SUB------------*//*
+    int  rrrr;
+    et_Sub(&rrrr,&a,&b);
+    if(rrrr == 0){
+        printf("a > b\n");
+    }else if(rrrr == 1){
+        printf("a < b\n");
+    }else if(rrrr == -1){
+        printf("a = b\n");
+    }
+    fflush(stdout);
+    *//*---------Recover---------*//*
     if(et_Recover(t3,&a) == ETPSS_ERROR){
         fprintf(stderr,"error in Recover operation");
     }
@@ -55,7 +68,7 @@ int main(int argc, char **argv){
     str1 = BN_bn2dec(t2);
     fprintf(stdout,"[B = %s]-->Recover value is %s\n",str1,x1);
     fflush(stdout);  // 刷新标准输出流
-    /*---------Add---------*/
+    *//*---------Add---------*//*
     if(et_Add(&c,&a,&b) == ETPSS_ERROR){
         fprintf(stderr,"error in ScalP operation");
     }
@@ -73,7 +86,7 @@ int main(int argc, char **argv){
     x1 = BN_bn2dec(t3);
     printf("B --> %s\n",x1);
     printf("--------------------------------------\n");
-    /*---------Sub---------*/
+    *//*---------Sub---------*//*
     int ret = -9999;
     if(et_Sub(&ret,&a,&b) != ETPSS_SUCCESS){
         fprintf(stderr,"error in Sub operation");
@@ -85,7 +98,7 @@ int main(int argc, char **argv){
     }else if(ret == -1){
         printf("a = b\n");
     }
-    /*---------ScalP---------*/
+    *//*---------ScalP---------*//*
     int t3n = 3333;
     BN_set_word(t3,t3n);
     // 3333 * 1111 = 3333 * (x1 + x2 + x3)
@@ -97,7 +110,7 @@ int main(int argc, char **argv){
 
     fprintf(stdout,"%d * [A = -1111] = C-->Recover value is %s\n",t3n,x1);
     fflush(stdout);  // 刷新标准输出流
-    /*---------et_Mul-----------*/
+    *//*---------et_Mul-----------*//*
 
     if(et_Mul(&c,&a,&b) == ETPSS_ERROR){
         fprintf(stderr,"error in mul operation");
@@ -112,13 +125,13 @@ int main(int argc, char **argv){
     et_Recover(t3,&a);
     x1 = BN_bn2dec(t3);
     fprintf(stdout,"[C = [A] * [B]] * [B = 2222] = C-->Recover value is %s\n",x1);
-    fflush(stdout);  // 刷新标准输出流
-    if(et_Mul(&b,&a,&c) == ETPSS_ERROR){
+    fflush(stdout);  // 刷新标准输出流*/
+    if(et_Add(&a,&a,&a) == ETPSS_ERROR){
         fprintf(stderr,"error in mul operation");
     }
-    et_Recover(t3,&b);
+    et_Recover(t3,&a);
     x1 = BN_bn2dec(t3);
-    fprintf(stdout,"[C = [A] * [B]] * [A = [C = [A] * [B]] * [B]] = C-->Recover value is %s\n",x1);
+    fprintf(stdout,"C-->Recover value is %s\n",x1);
     fflush(stdout);  // 刷新标准输出流
     /*---------------------*/
     free_eTPSS(&a);

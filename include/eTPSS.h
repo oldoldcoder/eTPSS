@@ -12,7 +12,7 @@
 #include <stdlib.h>
 /*---------define constant-----------*/
 #define N 64
-#define random_bits 30
+#define random_bits 64
 #define SEED 0xDEADBEEF
 #define ETPSS_ERROR -180607
 #define ETPSS_SUCCESS -180608
@@ -39,6 +39,8 @@ typedef struct {
 extern BIGNUM * MOD;
 extern BN_CTX * CTX;
 extern BIGNUM * RANDOM_RANGE;
+extern BIGNUM * ZERO;
+extern BIGNUM * ONE;
 /*
  * @desc:初始化MOD的值
  * */
@@ -87,7 +89,7 @@ int et_ScalP(eTPSS *res,eTPSS *var,BIGNUM * num);
 
 /*
  * @desc:eTPSS乘法
- * @param res:乘法结果
+ * @param res:乘法结果,注意这个算法的res目前不能和a或者b为同一个指针，a与b为同一个指针暂时未发现问题
  * */
 int et_Mul(eTPSS *res,eTPSS *a,eTPSS *b);
 /*
@@ -105,4 +107,9 @@ int et_Sub(int *ret,eTPSS *d1,eTPSS *d2);
  * */
 void et_Copy(eTPSS *to,eTPSS * from);
 
+// 计算加密数据与普通数据之间的距离
+// res是返回的[distance]
+int et_Sub_cal_res(eTPSS * res,eTPSS * d1,BIGNUM * d2);
+
+int et_Sub_cal_res_o(eTPSS * res,eTPSS * d1,eTPSS * d2);
 #endif

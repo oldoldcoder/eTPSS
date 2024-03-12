@@ -1,4 +1,4 @@
-# Install script for directory: /tmp/tmp.fZfcRMM09j
+# Install script for directory: /root/heqi/encryption_algorithm/eTPSS
 
 # Set the install prefix
 if(NOT DEFINED CMAKE_INSTALL_PREFIX)
@@ -50,5 +50,5 @@ endif()
 
 string(REPLACE ";" "\n" CMAKE_INSTALL_MANIFEST_CONTENT
        "${CMAKE_INSTALL_MANIFEST_FILES}")
-file(WRITE "/tmp/tmp.fZfcRMM09j/cmake-build-debug/${CMAKE_INSTALL_MANIFEST}"
+file(WRITE "/root/heqi/encryption_algorithm/eTPSS/cmake-build-debug/${CMAKE_INSTALL_MANIFEST}"
      "${CMAKE_INSTALL_MANIFEST_CONTENT}")

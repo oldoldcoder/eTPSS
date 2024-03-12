@@ -4,7 +4,7 @@
 # compile C with /usr/bin/gcc
 C_DEFINES = 
 
-C_INCLUDES = -I/tmp/tmp.fZfcRMM09j/include
+C_INCLUDES = -I/root/heqi/encryption_algorithm/eTPSS/include
 
 C_FLAGS = -g -std=gnu11 -fdiagnostics-color=always
 

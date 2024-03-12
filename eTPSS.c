@@ -18,10 +18,13 @@ BIGNUM * MOD = NULL;
 BN_CTX * CTX;
 BIGNUM * RANDOM_RANGE = NULL;
 u_char is_init = 0;
+BIGNUM * ZERO = NULL;
+BIGNUM * ONE = NULL;
 // 随机数序列
 static BIGNUM * rand_array[3];
 
 int initialize_Constant() {
+
     if(is_init)
         return ETPSS_SUCCESS;
     srand(time(0));
@@ -45,6 +48,11 @@ int initialize_Constant() {
        return ETPSS_ERROR;
     }
     is_init = 1;
+
+    ONE = BN_CTX_get(CTX);
+    BN_set_word(ONE,1);
+    ZERO = BN_CTX_get(CTX);
+    BN_set_word(ZERO,0);
     return ETPSS_SUCCESS;
 }
 static void free_array(){
@@ -149,7 +157,7 @@ int et_Share(eTPSS * var,BIGNUM * num){
     BN_sub(tmp,tmp,split2);
 
     BN_nnmod(split3,tmp,MOD,CTX);
-
+    var->is_multi_res = 0;
     ret = 0;
 end:
     BN_free(tmp);
@@ -295,6 +303,7 @@ int et_judge_symbols(int * res,eTPSS *d1){
     BIGNUM  * x1 = d1->CS1.x;
     BIGNUM  * x2 = d1->CS2.x;
     BIGNUM  * x3 = d1->CS3.x;
+
     BIGNUM  * z1 = BN_CTX_get(CTX);
     BIGNUM  * z2 = BN_CTX_get(CTX);
     BIGNUM  * z3 = BN_CTX_get(CTX);
@@ -305,11 +314,14 @@ int et_judge_symbols(int * res,eTPSS *d1){
         fprintf(stderr,"Error in obtaining random values.\n");
         return ETPSS_ERROR;
     }
+
+
     if (!BN_rand_range(u2, RANDOM_RANGE)){
         // 报错处理
         fprintf(stderr,"Error in obtaining random values.\n");
         return ETPSS_ERROR;
     }
+
 
     BN_sub(w1,x1,u1);
     BN_sub(w2,x2,u2);
@@ -318,6 +330,7 @@ int et_judge_symbols(int * res,eTPSS *d1){
     BN_add(u3,x3,tmp);
     BN_nnmod(u3,u3,MOD,CTX);
     BN_sub(u3,u3,MOD);
+
     // CS1和CS2生成一个共同的随机值r1
     if (!BN_rand_range(r1, RANDOM_RANGE)){
         // 报错处理
@@ -341,6 +354,8 @@ int et_judge_symbols(int * res,eTPSS *d1){
     /*-----------第四步-----------*/
     int y;
     BN_add(tmp,z2,z3);
+
+    fflush(stdout);
     if(BN_is_zero(tmp)){
         // 报告x等于0
         *res = -1;
@@ -386,6 +401,24 @@ int et_Sub(int *ret, eTPSS *d1,eTPSS *d2){
     return ETPSS_SUCCESS;
 }
 
+// 计算减法的结果
+int et_Sub_cal_res(eTPSS * res,eTPSS * d1,BIGNUM * d2){
+    eTPSS t;
+
+    init_eTPSS(&t);
+    et_Share(&t,d2);
+    // 符号取反，然后进行加法
+    BN_set_negative(t.CS1.x,BN_is_negative(t.CS1.x) ^ 1);
+    BN_set_negative(t.CS2.x,BN_is_negative(t.CS2.x) ^ 1);
+    BN_set_negative(t.CS3.x,BN_is_negative(t.CS3.x) ^ 1);
+    if(et_Add(res,d1,&t) != ETPSS_SUCCESS){
+        return ETPSS_ERROR;
+    }
+
+    free_eTPSS(&t);
+    return ETPSS_SUCCESS;
+}
+
 void et_Copy(eTPSS *d1,eTPSS * d2){
     BN_copy(d1->CS1.x,d2->CS1.x);
     BN_copy(d1->CS2.x ,d2->CS2.x);
@@ -398,6 +431,23 @@ void et_Copy(eTPSS *d1,eTPSS * d2){
     BN_copy(d1->CS2.r2, d2->CS2.r2);
     BN_copy(d1->CS3.r2, d2->CS3.r2);
     d1->is_multi_res = d2->is_multi_res;
+}
+
+int et_Sub_cal_res_o(eTPSS * res,eTPSS * d1,eTPSS * d2){
+    eTPSS t;
+
+    init_eTPSS(&t);
+    et_Copy(&t,d2);
+    // 符号取反，然后进行加法
+    BN_set_negative(t.CS1.x,BN_is_negative(t.CS1.x) ^ 1);
+    BN_set_negative(t.CS2.x,BN_is_negative(t.CS2.x) ^ 1);
+    BN_set_negative(t.CS3.x,BN_is_negative(t.CS3.x) ^ 1);
+    if(et_Add(res,d1,&t) != ETPSS_SUCCESS){
+        return ETPSS_ERROR;
+    }
+
+    free_eTPSS(&t);
+    return ETPSS_SUCCESS;
 }
 
 void free_BN_CTX(){
