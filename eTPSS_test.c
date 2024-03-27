@@ -22,9 +22,9 @@ int main(int argc, char **argv){
     init_eTPSS(&b);
     init_eTPSS(&c);
     /*-------Share---------*/
-    BN_set_word(t1,-1111);
+    BN_set_word(t1,1111);
     //BN_set_negative(t1,1);
-    BN_set_word(t2,-2222);
+    BN_set_word(t2,2222);
     char *str1 = BN_bn2dec(t1);
 
     if(et_Share(&a,t1) != ETPSS_SUCCESS){
@@ -126,7 +126,9 @@ int main(int argc, char **argv){
     x1 = BN_bn2dec(t3);
     fprintf(stdout,"[C = [A] * [B]] * [B = 2222] = C-->Recover value is %s\n",x1);
     fflush(stdout);  // 刷新标准输出流*/
-    if(et_Add(&a,&a,&a) == ETPSS_ERROR){
+    BIGNUM  * mmm = BN_new();
+    BN_set_word(mmm,4);
+    if(et_ScalP(&a,&a,mmm) == ETPSS_ERROR){
         fprintf(stderr,"error in mul operation");
     }
     et_Recover(t3,&a);

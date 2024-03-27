@@ -392,9 +392,22 @@ int et_Sub(int *ret, eTPSS *d1,eTPSS *d2){
         return ETPSS_ERROR;
     }
 
-    if(et_judge_symbols(ret,&res) != ETPSS_SUCCESS){
-        return ETPSS_ERROR;
+    BIGNUM * aaa = BN_CTX_get(CTX);
+    et_Recover(aaa,&res);
+    if(BN_is_zero(aaa)){
+        *ret = -1;
+    }else if(BN_is_negative(aaa)){
+        *ret = 1;
+    }else{
+        *ret = 0;
     }
+    /*if(et_judge_symbols(ret,&res) != ETPSS_SUCCESS){
+        return ETPSS_ERROR;
+    }*/
+    // 返还符号
+    /*if(et_judge_symbols(ret,&res) != ETPSS_SUCCESS){
+        return ETPSS_ERROR;
+    }*/
     // 返还符号
     free_eTPSS(&res);
     free_eTPSS(&t);
