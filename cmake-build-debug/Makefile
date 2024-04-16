@@ -153,29 +153,29 @@ eTPSS.c.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/eTPSS.dir/build.make CMakeFiles/eTPSS.dir/eTPSS.c.s
 .PHONY : eTPSS.c.s
 
-eTPSS_test.o: eTPSS_test.c.o
-.PHONY : eTPSS_test.o
+main.o: main.c.o
+.PHONY : main.o
 
 # target to build an object file
-eTPSS_test.c.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/eTPSS.dir/build.make CMakeFiles/eTPSS.dir/eTPSS_test.c.o
-.PHONY : eTPSS_test.c.o
+main.c.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/eTPSS.dir/build.make CMakeFiles/eTPSS.dir/main.c.o
+.PHONY : main.c.o
 
-eTPSS_test.i: eTPSS_test.c.i
-.PHONY : eTPSS_test.i
+main.i: main.c.i
+.PHONY : main.i
 
 # target to preprocess a source file
-eTPSS_test.c.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/eTPSS.dir/build.make CMakeFiles/eTPSS.dir/eTPSS_test.c.i
-.PHONY : eTPSS_test.c.i
+main.c.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/eTPSS.dir/build.make CMakeFiles/eTPSS.dir/main.c.i
+.PHONY : main.c.i
 
-eTPSS_test.s: eTPSS_test.c.s
-.PHONY : eTPSS_test.s
+main.s: main.c.s
+.PHONY : main.s
 
 # target to generate assembly for a file
-eTPSS_test.c.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/eTPSS.dir/build.make CMakeFiles/eTPSS.dir/eTPSS_test.c.s
-.PHONY : eTPSS_test.c.s
+main.c.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/eTPSS.dir/build.make CMakeFiles/eTPSS.dir/main.c.s
+.PHONY : main.c.s
 
 # Help Target
 help:
@@ -189,9 +189,9 @@ help:
 	@echo "... eTPSS.o"
 	@echo "... eTPSS.i"
 	@echo "... eTPSS.s"
-	@echo "... eTPSS_test.o"
-	@echo "... eTPSS_test.i"
-	@echo "... eTPSS_test.s"
+	@echo "... main.o"
+	@echo "... main.i"
+	@echo "... main.s"
 .PHONY : help
 
 

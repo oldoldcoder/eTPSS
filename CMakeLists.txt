@@ -8,7 +8,7 @@ find_package(OpenSSL REQUIRED)
 
 if(OPENSSL_FOUND)
 
-    add_executable(${PROJECT_NAME} eTPSS_test.c eTPSS.c)
+    add_executable(${PROJECT_NAME} main.c eTPSS.c)
 
     target_include_directories(${PROJECT_NAME} PUBLIC include)
     # 链接 OpenSSL 库

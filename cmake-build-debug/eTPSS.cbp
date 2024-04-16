@@ -81,7 +81,7 @@
 		<Unit filename="/root/heqi/encryption_algorithm/eTPSS/eTPSS.c">
 			<Option target="eTPSS"/>
 		</Unit>
-		<Unit filename="/root/heqi/encryption_algorithm/eTPSS/eTPSS_test.c">
+		<Unit filename="/root/heqi/encryption_algorithm/eTPSS/main.c">
 			<Option target="eTPSS"/>
 		</Unit>
 		<Unit filename="/root/heqi/encryption_algorithm/eTPSS/CMakeLists.txt">
