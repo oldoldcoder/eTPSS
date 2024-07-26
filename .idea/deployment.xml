@@ -1,8 +1,15 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
-  <component name="PublishConfigData" serverName="Remote Development" remoteFilesAllowedToDisappearOnAutoupload="false" confirmBeforeUploading="false" showNewOnSourceInSync="false">
+  <component name="PublishConfigData" serverName="xd" remoteFilesAllowedToDisappearOnAutoupload="false" confirmBeforeUploading="false" showNewOnSourceInSync="false">
     <option name="confirmBeforeUploading" value="false" />
     <serverData>
+      <paths name="Remote Host (7fac0e3b-4fc5-4c34-97a4-7a384f962595)">
+        <serverdata>
+          <mappings>
+            <mapping deploy="/tmp/tmp.NIMmg3fqyt" local="$PROJECT_DIR$" />
+          </mappings>
+        </serverdata>
+      </paths>
       <paths name="ub (19b85761-8ef1-48d1-8eb3-917d4bca7506)">
         <serverdata>
           <mappings>
@@ -18,6 +25,13 @@
         <serverdata>
           <mappings>
             <mapping deploy="/root/heqi/encryption_algorithm/eTPSS" local="$PROJECT_DIR$" web="/" />
+          </mappings>
+        </serverdata>
+      </paths>
+      <paths name="中讯">
+        <serverdata>
+          <mappings>
+            <mapping deploy="/root/project4/c/eTPSS" local="$PROJECT_DIR$" web="/" />
           </mappings>
         </serverdata>
       </paths>

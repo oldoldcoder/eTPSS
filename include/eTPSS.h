@@ -54,13 +54,11 @@ void free_BN_CTX();
  * @param var:初始化的量
  * */
 int init_eTPSS(eTPSS * var);
-
 /*
  * @desc:释放空间
  * @param var:释放的量
  * */
 int free_eTPSS(eTPSS * var);
-
 /*
  * @desc:x1 + x2 + x3 = (num mod 2^n),三者在整数域内
  * @param var:得到值被分配的eTPSS

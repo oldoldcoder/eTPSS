@@ -1,10 +1,11 @@
 #include <openssl/bn.h>
 
-#include "include/eTPSS.h"
+#include "../include/eTPSS.h"
 #include <stdlib.h>
 #include <stdio.h>
 #include "utils.h"
 int main(){
+    printf("开始执行eTPSS...\n");
     initialize_Constant();
     // 从utils中读取我们的数据
     FILE  * file = fopen(DATA_PATH,"r");
@@ -16,7 +17,7 @@ int main(){
     size_t len = 0;
     // 初始化data
     int totalLines;
-    fscanf(file, "%d", &totalLines); // 读取第一行中的两个数字
+    fscanf(file, "%d\n", &totalLines); // 读取第一行中的两个数字
     // 动态的创建一个bignum数组
     BIGNUM ** arr = (BIGNUM **) malloc(sizeof (BIGNUM *) * totalLines);
     int n = 0;
@@ -34,11 +35,13 @@ int main(){
     }
     fclose(file);
 
+    printf("处理文件...\n");
     /**
      * 进行处理，处理相同数量的eTPSS，之后将值写入结果的文件
      * */
     eTPSS ** cryptArr = (eTPSS **) malloc(sizeof (eTPSS *) * totalLines);
     for(int i = 0 ; i < totalLines ; ++i){
+
         init_eTPSS(cryptArr[i]);
         et_Share(cryptArr[i],arr[i]);
     }
@@ -61,5 +64,7 @@ int main(){
         BN_clear(arr[i]);
     }
     fclose(file);
+
+    printf("执行结束，写入完成...\n");
     return SUCCESS;
 }

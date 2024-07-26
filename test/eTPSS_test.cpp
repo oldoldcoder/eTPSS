@@ -1,6 +1,6 @@
 #include <openssl/bn.h>
 
-#include "include/eTPSS.h"
+#include "../include/eTPSS.h"
 
 #include <stdlib.h>
 #include <stdio.h>

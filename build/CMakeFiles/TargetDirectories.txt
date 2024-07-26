@@ -1,3 +1,0 @@
-/root/heqi/encryption_algorithm/eTPSS/build/CMakeFiles/eTPSS.dir
-/root/heqi/encryption_algorithm/eTPSS/build/CMakeFiles/edit_cache.dir
-/root/heqi/encryption_algorithm/eTPSS/build/CMakeFiles/rebuild_cache.dir
