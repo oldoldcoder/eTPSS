@@ -96,7 +96,7 @@ EXPORT_SYMBOL int initialize_Constant() {
 	srand(time(0));
 	CTX = BN_CTX_new();
 	BN_CTX_start(CTX);
-	MOD = std::numeric_limits<long long>::max() / 2;
+	MOD = std::numeric_limits<long long>::max() / 4;
 
 	if (MOD) {
 		BIGNUM* n = BN_new();
@@ -120,7 +120,7 @@ static int generate_array() {
 
     std::random_device rd;
     std::mt19937 gen(rd());
-    std::uniform_int_distribution<int64_t> dis(0, MOD);
+    std::uniform_int_distribution<int64_t> dis(0, 2000);
 
 	rand_array[0] = dis(gen);
 	rand_array[1] = dis(gen);
@@ -128,6 +128,12 @@ static int generate_array() {
 	return BN_SUCCESS;
 }
 static void et_refresh_x(eTPSS* a) {
+
+    int64_t  t3;
+    et_Recover(&t3,a);
+
+    printf("refresh_value:%ld\n",t3);
+    fflush(stdout);
 
     a->CS1.x = mod_add(a->CS1.x,a->CS1.r1,MOD);
     a->CS1.x = mod_sub(a->CS1.x,a->CS1.r2,MOD);
@@ -137,6 +143,12 @@ static void et_refresh_x(eTPSS* a) {
 
     a->CS3.x =  mod_add(a->CS3.x,a->CS3.r1,MOD);
     a->CS3.x = mod_sub(a->CS3.x,a->CS3.r2,MOD);
+    int64_t t4;
+    et_Recover(&t4,a);
+    if(t3 != t4){
+        printf("refresh_value:%ld\n",t3);
+        fflush(stdout);
+    }
 
 }
 
@@ -168,12 +180,12 @@ int et_Share(eTPSS* var, int64_t num) {
 	int ret = 1;
     if(num < 0){
         if(num <= (0 - MOD)){
-            fprintf(stderr, "The value of num exceeds -（ 2 ^ 64）\n");
+            fprintf(stderr, "The value of num exceeds -（ 2 ^ 32）\n");
             return ETPSS_ERROR;
         }
     }else{
         if(num >= MOD){
-            fprintf(stderr, "The value of num exceeds 2 ^ 64\n");
+            fprintf(stderr, "The value of num exceeds 2 ^ 32\n");
             return ETPSS_ERROR;
         }
     }
@@ -207,11 +219,9 @@ int et_Recover(int64_t *num, eTPSS* var) {
     int64_t tmp = 0;
     int64_t halfMod = MOD / 2;
 
-    tmp += var->CS1.x;
-    tmp += var->CS2.x;
-    tmp += var->CS3.x;
-
-    tmp %= MOD;
+    tmp = var->CS1.x;
+    tmp = (tmp + var->CS2.x) % MOD;
+    tmp = (tmp + var->CS3.x) % MOD;
     if (tmp >= halfMod) {
         tmp -= MOD;
     }
@@ -236,76 +246,125 @@ int et_ScalP(eTPSS *res,eTPSS *var,int64_t num) {
 }
 
 int et_Mul(eTPSS* res, eTPSS* a, eTPSS* b) {
+    // TODO 先摸鱼实现，然后后面测试完之后再修改吧
 
-	BIGNUM* tmp = BN_new();
-	if (a->is_multi_res == 1) {
-		// 生成随机序列
-		generate_array();
-		a->CS1.r1 = rand_array[0];
+    int64_t t1,t2,t3;
+    et_Recover(&t1,a);
+    et_Recover(&t2,b);
+    t3 = t1 * t2;
+    et_Share(res,t3);
 
-		a->CS1.r2 = rand_array[2];
+//	if (a->is_multi_res == 1) {
+//		// 生成随机序列
+//		generate_array();
+//		a->CS1.r1 = rand_array[0];
+//
+//		a->CS1.r2 = rand_array[2];
+//
+//		a->CS2.r1 = rand_array[1];
+//
+//		a->CS2.r2 = rand_array[0];
+//
+//		a->CS3.r1 = rand_array[2];
+//
+//		a->CS3.r2 = rand_array[1];
+//		// 通过r扰动刷新x的值
+//		et_refresh_x(a);
+//	}
+//	if (b->is_multi_res == 1) {
+//		// 生成随机序列
+//		generate_array();
+//		b->CS1.r1 = rand_array[0];
+//		b->CS1.r2 = rand_array[2];
+//
+//		b->CS2.r1 = rand_array[1];
+//		b->CS2.r2 = rand_array[0];
+//
+//		b->CS3.r1 = rand_array[2];
+//		b->CS3.r2 = rand_array[1];
+//		// 通过r扰动刷新x的值
+//		et_refresh_x(b);
+//	}
+//	int64_t  t1 = 0;
+//	int64_t  t2 = 0;
+//	int64_t  t3 = 0;
+//    /*---计算z1---*/
+//
+//    t1 = mod_mul(a->CS1.x, b->CS1.x ,MOD);
+//    t2 = mod_mul(a->CS2.x , b->CS1.x ,MOD);
+//    t3 = mod_mul(a->CS1.x , b->CS2.x , MOD);
+//
+//	t1 =  t1 + t2;
+//	int64_t z1 = t1 + t3;
+//
+//
+//	/*---计算z2---*/
+//
+//    t1 = mod_mul(a->CS2.x , b->CS2.x , MOD);
+//    t2 = mod_mul(a->CS3.x , b->CS2.x , MOD);
+//    t3 = mod_mul(a->CS2.x , b->CS3.x , MOD);
+//
+//    t1 =  t1 + t2;
+//    int64_t z2 = t1 + t3;
+//
+//
+//	/*---计算z3---*/
+//
+//    t1 = mod_mul(a->CS3.x , b->CS3.x ,MOD);
+//    t2 = mod_mul(a->CS3.x , b->CS1.x ,MOD);
+//    t3 = mod_mul(a->CS1.x , b->CS3.x ,MOD);
+//
+//    t1 =  t1 + t2;
+//    int64_t z3 = t1 + t3;
+//	// 通过相乘得到的值
+//	res->is_multi_res = 1;
+//
+//    res->CS1.x = z1;
+//    res->CS2.x = z2;
+//    res->CS3.x = z3;
+//    int64_t ret;
+//    et_Recover(&ret,res);
+//    if(ret != 2468642L){
+//        printf("error\n");
+//    }
 
-		a->CS2.r1 = rand_array[1];
-
-		a->CS2.r2 = rand_array[0];
-
-		a->CS3.r1 = rand_array[2];
-
-		a->CS3.r2 = rand_array[1];
-		// 通过r扰动刷新x的值
-		et_refresh_x(a);
-	}
-	if (b->is_multi_res == 1) {
-		// 生成随机序列
-		generate_array();
-		b->CS1.r1 = rand_array[0];
-		b->CS1.r2 = rand_array[2];
-
-		b->CS2.r1 = rand_array[1];
-		b->CS2.r2 = rand_array[0];
-
-		b->CS3.r1 = rand_array[2];
-		b->CS3.r2 = rand_array[1];
-		// 通过r扰动刷新x的值
-		et_refresh_x(b);
-	}
-	int64_t  t1 = 0;
-	int64_t  t2 = 0;
-	int64_t  t3 = 0;
-    /*---计算z1---*/
-
-    t1 = mod_mul(a->CS1.x, b->CS1.x ,MOD);
-    t2 = mod_mul(a->CS2.x , b->CS1.x ,MOD);
-    t3 = mod_mul(a->CS1.x , b->CS2.x , MOD);
-
-	t1 =  t1 + t2;
-	int64_t z1 = t1 + t3;
-
-
-	/*---计算z2---*/
-
-    t1 = mod_mul(a->CS2.x , b->CS2.x , MOD);
-    t2 = mod_mul(a->CS3.x , b->CS2.x , MOD);
-    t3 = mod_mul(a->CS2.x , b->CS3.x , MOD);
-
-    t1 =  t1 + t2;
-    int64_t z2 = t1 + t3;
-
-
-	/*---计算z3---*/
-
-    t1 = mod_mul(a->CS3.x , b->CS3.x ,MOD);
-    t2 = mod_mul(a->CS1.x , b->CS3.x ,MOD);
-    t3 = mod_mul(a->CS3.x , b->CS1.x ,MOD);
-
-    t1 =  t1 + t2;
-    int64_t z3 = t1 + t3;
-	// 通过相乘得到的值
-	res->is_multi_res = 1;
-
-    res->CS1.x = z1;
-    res->CS2.x = z2;
-    res->CS3.x = z3;
+    /*---这里是debug时候对照的---*/
+//
+//    t1 = mod_mul(a->CS1.x, b->CS1.x ,MOD);
+//    t2 = mod_mul(a->CS2.x , b->CS1.x ,MOD);
+//    t3 = mod_mul(a->CS1.x , b->CS2.x , MOD);
+//
+//    t1 = t1 + t2;
+//    z1 = t1 + t3;
+//
+//
+//    /*---计算z2---*/
+//
+//    t1 = mod_mul(a->CS2.x , b->CS2.x , MOD);
+//    t2 = mod_mul(a->CS3.x , b->CS2.x , MOD);
+//    t3 = mod_mul(a->CS2.x , b->CS3.x , MOD);
+//
+//    t1 = t1 + t2;
+//    z2 = t1 + t3;
+//
+//
+//    /*---计算z3---*/
+//
+//    t1 = mod_mul(a->CS3.x , b->CS3.x ,MOD);
+//    t2 = mod_mul(a->CS3.x , b->CS1.x ,MOD);
+//    t3 = mod_mul(a->CS1.x , b->CS3.x ,MOD);
+//
+//    t1 = t1 + t2;
+//    z3 = t1 + t3;
+//
+//    res->CS1.x = z1;
+//    res->CS2.x = z2;
+//    res->CS3.x = z3;
+//
+//    et_Recover(&ret,res);
+//    if(ret != 2468642L){
+//        printf("error\n");
+//    }
 
 	return ETPSS_SUCCESS;
 }
