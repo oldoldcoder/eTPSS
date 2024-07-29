@@ -8,17 +8,16 @@
 #include <openssl/bn.h>
 
 #include "eTPSS.h"
-
-#include <stdlib.h>
+#include "random"
+#include <cstdlib>
 
 /*------------------------*/
-BIGNUM* MOD = NULL;
+int64_t MOD = NULL;
 BN_CTX* CTX;
-BIGNUM* RANDOM_RANGE = NULL;
 int is_init = 0;
 BIGNUM* ZERO = NULL;
 BIGNUM* ONE = NULL;
-static BIGNUM* rand_array[3];
+static int64_t rand_array[3];
 
 /**getline to solve problem*/
 
@@ -64,6 +63,32 @@ static BIGNUM* rand_array[3];
     bufptr[len] = '\0';
     return len;
 }*/
+
+int64_t mod_add(int64_t a, int64_t b, int64_t mod) {
+    __int128_t result = (__int128_t(a) + __int128_t(b)) % mod;
+//    if (result < 0) {
+//        result += mod;
+//    }
+    return static_cast<int64_t>(result);
+}
+
+int64_t mod_sub(int64_t a, int64_t b, int64_t mod) {
+    __int128_t result = (__int128_t(a) - __int128_t(b)) % mod;
+//    if (result < 0) {
+//        result += mod;
+//    }
+    return static_cast<int64_t>(result);
+}
+
+int64_t mod_mul(int64_t a, int64_t b, int64_t mod) {
+    __int128_t result = (__int128_t(a) * __int128_t(b)) % mod;
+    return static_cast<int64_t>(result);
+//    if (result < 0) {
+//        result += mod;
+//    }
+
+}
+
 EXPORT_SYMBOL int initialize_Constant() {
 
 	if (is_init)
@@ -71,18 +96,12 @@ EXPORT_SYMBOL int initialize_Constant() {
 	srand(time(0));
 	CTX = BN_CTX_new();
 	BN_CTX_start(CTX);
-	MOD = BN_CTX_get(CTX);
-	RANDOM_RANGE = BN_CTX_get(CTX);
+	MOD = std::numeric_limits<long long>::max() / 2;
 
 	if (MOD) {
 		BIGNUM* n = BN_new();
 		BN_set_word(n, N);
-		BN_set_word(MOD, 2);
-		BN_exp(MOD, MOD, n, CTX); // 计算 2 的 n 次方，并将结果存储在 result 中
-
 		BN_set_word(n, random_bits);
-		BN_set_word(RANDOM_RANGE, 2);
-		BN_exp(RANDOM_RANGE, RANDOM_RANGE, n, CTX); // 计算 2 的 n 次方，并将结果存储在 result 中
 
 		BN_free(n);
 	}
@@ -97,168 +116,123 @@ EXPORT_SYMBOL int initialize_Constant() {
 	BN_set_word(ZERO, 0);
 	return ETPSS_SUCCESS;
 }
-static void free_array() {
-	BN_free(rand_array[0]);
-	BN_free(rand_array[1]);
-	BN_free(rand_array[2]);
-}
 static int generate_array() {
-	BIGNUM* a = BN_new();
-	BIGNUM* b = BN_new();
-	BIGNUM* c = BN_new();
 
-	if (!BN_rand_range(a, MOD) ||
-		!BN_rand_range(b, MOD) ||
-		!BN_rand_range(c, MOD)) {
-		free_array();
-		return BN_ERROR;
-	}
-	rand_array[0] = a;
-	rand_array[1] = b;
-	rand_array[2] = c;
+    std::random_device rd;
+    std::mt19937 gen(rd());
+    std::uniform_int_distribution<int64_t> dis(0, MOD);
+
+	rand_array[0] = dis(gen);
+	rand_array[1] = dis(gen);
+	rand_array[2] = dis(gen);
 	return BN_SUCCESS;
 }
 static void et_refresh_x(eTPSS* a) {
 
-    BN_CTX * ctx = BN_CTX_new();
-    BN_CTX_start(ctx);
+    a->CS1.x = mod_add(a->CS1.x,a->CS1.r1,MOD);
+    a->CS1.x = mod_sub(a->CS1.x,a->CS1.r2,MOD);
 
-	BN_mod_add(a->CS1.x, a->CS1.x, a->CS1.r1, MOD, ctx);
-	BN_mod_sub(a->CS1.x, a->CS1.x, a->CS1.r2, MOD, ctx);
+    a->CS2.x =  mod_add(a->CS2.x,a->CS2.r1,MOD);
+    a->CS2.x = mod_sub(a->CS2.x,a->CS2.r2,MOD);
 
-	BN_mod_add(a->CS2.x, a->CS2.x, a->CS2.r1, MOD, ctx);
-	BN_mod_sub(a->CS2.x, a->CS2.x, a->CS2.r2, MOD, ctx);
-
-	BN_mod_add(a->CS3.x, a->CS3.x, a->CS3.r1, MOD, ctx);
-	BN_mod_sub(a->CS3.x, a->CS3.x, a->CS3.r2, MOD, ctx);
-    BN_CTX_end(ctx);
-    BN_CTX_free(ctx);
+    a->CS3.x =  mod_add(a->CS3.x,a->CS3.r1,MOD);
+    a->CS3.x = mod_sub(a->CS3.x,a->CS3.r2,MOD);
 
 }
 
 
 
 int init_eTPSS(eTPSS* var) {
-
-	var->ctx = BN_CTX_new();
-	if (var->ctx == NULL) {
-		return BN_ERROR;
-	}
-	BN_CTX_start(var->ctx);
+    
 	// 初始化设定不是通过乘法获得
 	var->is_multi_res = 0;
-	var->CS1.r1 = BN_CTX_get(var->ctx);
-	var->CS1.r2 = BN_CTX_get(var->ctx);
-	var->CS1.x = BN_CTX_get(var->ctx);
+	var->CS1.r1 = 0;
+	var->CS1.r2 =0;
+	var->CS1.x =0;
 
-	var->CS2.r1 = BN_CTX_get(var->ctx);
-	var->CS2.r2 = BN_CTX_get(var->ctx);
-	var->CS2.x = BN_CTX_get(var->ctx);
+	var->CS2.r1 = 0;
+	var->CS2.r2 = 0;
+	var->CS2.x = 0;
 
-	var->CS3.r1 = BN_CTX_get(var->ctx);
-	var->CS3.r2 = BN_CTX_get(var->ctx);
-	var->CS3.x = BN_CTX_get(var->ctx);
+	var->CS3.r1 = 0;
+	var->CS3.r2 = 0;
+	var->CS3.x = 0;
 	return BN_SUCCESS;
 
 }
 int free_eTPSS(eTPSS* var) {
-	BN_CTX_end(var->ctx);
-	BN_CTX_free(var->ctx);
 	return ETPSS_SUCCESS;
 }
 
-int et_Share(eTPSS* var, BIGNUM* num) {
+int et_Share(eTPSS* var, int64_t num) {
 	int ret = 1;
-	// 不在范围内的判断
-	if (BN_is_negative(num)) {
-		// 如果比负的mod还小
-		BN_set_negative(MOD, 1);
-		if (BN_cmp(num, MOD) <= 0) {
-			fprintf(stderr, "The value of num exceeds -（ 2 ^ 64）\n");
-			return ETPSS_ERROR;
-		}
-		BN_set_negative(MOD, 0);
-	}
-	else {
-		if (BN_cmp(num, MOD) >= 0) {
-			fprintf(stderr, "The value of num exceeds 2 ^ 64\n");
-			return ETPSS_ERROR;
-		}
-	}
-	BIGNUM* tmp = BN_new();
-	BN_copy(tmp, num);
+    if(num < 0){
+        if(num <= (0 - MOD)){
+            fprintf(stderr, "The value of num exceeds -（ 2 ^ 64）\n");
+            return ETPSS_ERROR;
+        }
+    }else{
+        if(num >= MOD){
+            fprintf(stderr, "The value of num exceeds 2 ^ 64\n");
+            return ETPSS_ERROR;
+        }
+    }
+
+	int64_t tmp = num;
 	// 进行直接划分值，在2^64次方内，直接进行划分值
-	BIGNUM* split1 = var->CS1.x;
-	BIGNUM* split2 = var->CS2.x;
-	BIGNUM* split3 = var->CS3.x;
-    BN_CTX *ctx = BN_CTX_new();
-    BN_CTX_start(ctx);
+    int64_t split1 = 0;
+    int64_t split2 = 0;
+    int64_t split3 = 0;
+    // 创建随机数生成器
+    std::random_device rd;
+    std::mt19937 gen(rd());
+    std::uniform_int_distribution<int64_t> dis(0, MOD);
+    // 生成两个MOD以内的随机值，int64_t类型的
+	split1 = dis(gen);
+    split2 = dis(gen);
+    split3 = tmp - split1 - split2;
 
-	if (!BN_rand_range(split1, MOD)) {
+    split3 %= MOD;
 
-		fprintf(stderr, "process of split have some trouble\n");
-		goto end;
-	}
-	if (!BN_rand_range(split2, MOD)) {
-		fprintf(stderr, "process of split have some trouble\n");
-		goto end;
-	}
-	BN_sub(tmp, tmp, split1);
-
-	BN_sub(tmp, tmp, split2);
-
-	BN_nnmod(split3, tmp, MOD, ctx);
-    BN_CTX_end(ctx);
-    BN_CTX_free(ctx);
+    var->CS1.x = split1;
+    var->CS2.x = split2;
+    var->CS3.x = split3;
 
 	var->is_multi_res = 0;
-	ret = 0;
-end:
-	BN_free(tmp);
-	return ret == 0 ? ETPSS_SUCCESS : ETPSS_ERROR;
-}
-
-int et_Recover(BIGNUM* num, eTPSS* var) {
-	BIGNUM* tmp = BN_new();
-	BIGNUM* halfMod = BN_new();
-	BN_copy(halfMod, MOD);
-	BN_div_word(halfMod, 2);
-	BN_add(tmp, var->CS1.x, var->CS2.x);
-	BN_add(tmp, tmp, var->CS3.x);
-    BN_CTX * ctx = BN_CTX_new();
-    BN_CTX_start(ctx);
-	BN_nnmod(tmp, tmp, MOD, ctx);
-	if (BN_cmp(tmp, halfMod) >= 0) {
-		BN_sub(tmp, tmp, MOD);
-	}
-	BN_copy(num, tmp);
-
-	BN_free(tmp);
-	BN_free(halfMod);
 	return ETPSS_SUCCESS;
+}
+// 返回引用值
+int et_Recover(int64_t *num, eTPSS* var) {
+
+    int64_t tmp = 0;
+    int64_t halfMod = MOD / 2;
+
+    tmp += var->CS1.x;
+    tmp += var->CS2.x;
+    tmp += var->CS3.x;
+
+    tmp %= MOD;
+    if (tmp >= halfMod) {
+        tmp -= MOD;
+    }
+
+    *num = tmp;
+    return ETPSS_SUCCESS;
+
 }
 
 int et_Add(eTPSS* res, eTPSS* a, eTPSS* b) {
-    BN_CTX *ctx = BN_CTX_new();
-    BN_CTX_start(ctx);
-	if (!BN_mod_add(res->CS1.x, a->CS1.x, b->CS1.x, MOD, ctx) ||
-		!BN_mod_add(res->CS2.x, a->CS2.x, b->CS2.x, MOD, ctx) ||
-		!BN_mod_add(res->CS3.x, a->CS3.x, b->CS3.x, MOD, ctx)) {
-		return ETPSS_ERROR;
-	}
-    BN_CTX_end(ctx);
-    BN_CTX_free(ctx);
-	return ETPSS_SUCCESS;
+    res->CS1.x = mod_add(a->CS1.x,b->CS1.x , MOD) ;
+    res->CS2.x = mod_add(a->CS2.x,b->CS2.x , MOD);
+    res->CS3.x = mod_add(a->CS3.x,b->CS3.x , MOD);
+    return ETPSS_SUCCESS;
 }
 
-int et_ScalP(eTPSS* res, eTPSS* var, BIGNUM* num) {
-
-	if (!BN_mod_mul(res->CS1.x, var->CS1.x, num, MOD, CTX) ||
-		!BN_mod_mul(res->CS2.x, var->CS2.x, num, MOD, CTX) ||
-		!BN_mod_mul(res->CS3.x, var->CS3.x, num, MOD, CTX)) {
-		return ETPSS_ERROR;
-	}
-	return ETPSS_SUCCESS;
+int et_ScalP(eTPSS *res,eTPSS *var,int64_t num) {
+    res->CS1.x = mod_mul(var->CS1.x,num,MOD);
+    res->CS2.x = mod_mul(var->CS2.x,num,MOD);
+    res->CS3.x = mod_mul(var->CS3.x,num,MOD);
+    return ETPSS_SUCCESS;
 }
 
 int et_Mul(eTPSS* res, eTPSS* a, eTPSS* b) {
@@ -280,7 +254,6 @@ int et_Mul(eTPSS* res, eTPSS* a, eTPSS* b) {
 		a->CS3.r2 = rand_array[1];
 		// 通过r扰动刷新x的值
 		et_refresh_x(a);
-		free_array();
 	}
 	if (b->is_multi_res == 1) {
 		// 生成随机序列
@@ -295,150 +268,107 @@ int et_Mul(eTPSS* res, eTPSS* a, eTPSS* b) {
 		b->CS3.r2 = rand_array[1];
 		// 通过r扰动刷新x的值
 		et_refresh_x(b);
-		free_array();
 	}
-	BIGNUM* z1 = res->CS1.x;
-	BIGNUM* z2 = res->CS2.x;
-	BIGNUM* z3 = res->CS3.x;
-	BIGNUM* t1 = BN_new();
-	BIGNUM* t2 = BN_new();
-	BIGNUM* t3 = BN_new();
-	/*---计算z1---*/
-    BN_CTX *ctx = BN_CTX_new();
-    BN_CTX_start(ctx);
+	int64_t  t1 = 0;
+	int64_t  t2 = 0;
+	int64_t  t3 = 0;
+    /*---计算z1---*/
 
-	BN_mod_mul(t1, a->CS1.x, b->CS1.x, MOD, ctx);
+    t1 = mod_mul(a->CS1.x, b->CS1.x ,MOD);
+    t2 = mod_mul(a->CS2.x , b->CS1.x ,MOD);
+    t3 = mod_mul(a->CS1.x , b->CS2.x , MOD);
 
-	BN_mod_mul(t2, a->CS2.x, b->CS1.x, MOD, ctx);
-
-	BN_mod_mul(t3, a->CS1.x, b->CS2.x, MOD, ctx);
-
-	BN_add(t1, t1, t2);
-	BN_add(z1, t1, t3);
+	t1 =  t1 + t2;
+	int64_t z1 = t1 + t3;
 
 
 	/*---计算z2---*/
-	BN_mod_mul(t1, a->CS2.x, b->CS2.x, MOD, ctx);
 
-	BN_mod_mul(t2, a->CS3.x, b->CS2.x, MOD, ctx);
+    t1 = mod_mul(a->CS2.x , b->CS2.x , MOD);
+    t2 = mod_mul(a->CS3.x , b->CS2.x , MOD);
+    t3 = mod_mul(a->CS2.x , b->CS3.x , MOD);
 
-	BN_mod_mul(t3, a->CS2.x, b->CS3.x, MOD, ctx);
-
-	BN_add(t1, t1, t2);
-	BN_add(z2, t1, t3);
+    t1 =  t1 + t2;
+    int64_t z2 = t1 + t3;
 
 
 	/*---计算z3---*/
-	BN_mod_mul(t1, a->CS3.x, b->CS3.x, MOD, ctx);
 
-	BN_mod_mul(t2, a->CS1.x, b->CS3.x, MOD, ctx);
+    t1 = mod_mul(a->CS3.x , b->CS3.x ,MOD);
+    t2 = mod_mul(a->CS1.x , b->CS3.x ,MOD);
+    t3 = mod_mul(a->CS3.x , b->CS1.x ,MOD);
 
-	BN_mod_mul(t3, a->CS3.x, b->CS1.x, MOD, ctx);
-
-	BN_add(t1, t1, t2);
-	BN_add(z3, t1, t3);
+    t1 =  t1 + t2;
+    int64_t z3 = t1 + t3;
 	// 通过相乘得到的值
 	res->is_multi_res = 1;
 
-	BN_free(t1);
-	BN_free(t2);
-	BN_free(t3);
-    BN_CTX_end(ctx);
-    BN_CTX_free(ctx);
+    res->CS1.x = z1;
+    res->CS2.x = z2;
+    res->CS3.x = z3;
+
 	return ETPSS_SUCCESS;
 }
 
-// 判断etpss的符号,赋值给res
+
+// TODO 这里可以最摸的做法，直接回复之后判断正负算了
 int et_judge_symbols(int* res, eTPSS* d1) {
+    std::random_device rd;
+    std::mt19937 gen(rd());
+    std::uniform_int_distribution<int64_t> dis(0, MOD);
+    // 随机影响因子默认生成的值是2^64次方内的值
+    int64_t u1 = dis(gen);
+    int64_t u2 = dis(gen);
+    int64_t u3, w1, w2, tmp, r1, r2, z1, z2, z3;
 
-	// 随机影响因子默认生成的值是2^64次方内的值
-	BIGNUM* u1 = BN_CTX_get(CTX);
-	BIGNUM* u2 = BN_CTX_get(CTX);
-	BIGNUM* u3 = BN_CTX_get(CTX);
-	BIGNUM* w1 = BN_CTX_get(CTX);
-	BIGNUM* w2 = BN_CTX_get(CTX);
+    int64_t x1 = d1->CS1.x;
+    int64_t x2 = d1->CS2.x;
+    int64_t x3 = d1->CS3.x;
 
-	BIGNUM* tmp = BN_CTX_get(CTX);
-	// 随机扰动值
-	BIGNUM* r1 = BN_CTX_get(CTX);
-	BIGNUM* r2 = BN_CTX_get(CTX);
-	BIGNUM* x1 = d1->CS1.x;
-	BIGNUM* x2 = d1->CS2.x;
-	BIGNUM* x3 = d1->CS3.x;
+    // 计算 w1 = x1 - u1, w2 = x2 - u2
+    w1 = mod_sub(x1, u1, MOD);
+    w2 = mod_sub(x2, u2, MOD);
 
-	BIGNUM* z1 = BN_CTX_get(CTX);
-	BIGNUM* z2 = BN_CTX_get(CTX);
-	BIGNUM* z3 = BN_CTX_get(CTX);
+    // 计算 u3 = x3 + w1 + w2 - MOD
+    tmp = mod_add(w1, w2, MOD);
+    u3 = mod_add(x3, tmp, MOD);
+    u3 = mod_sub(u3, MOD, MOD);
 
+    // CS1和CS2生成一个共同的随机值r1
+    r1 = dis(gen);
 
-	if (!BN_rand_range(u1, RANDOM_RANGE)) {
-		// 报错处理
-		fprintf(stderr, "Error in obtaining random values.\n");
-		return ETPSS_ERROR;
-	}
+    // CS2和CS3生成一个共同的随机值r2
+    r2 = dis(gen);
 
+    // CS1计算 z1 = u1 + r1
+    z1 = mod_add(u1, r1, MOD);
 
-	if (!BN_rand_range(u2, RANDOM_RANGE)) {
-		// 报错处理
-		fprintf(stderr, "Error in obtaining random values.\n");
-		return ETPSS_ERROR;
-	}
+    // CS3计算 z3 = (z1 + u3) * r2
+    z1 = mod_add(z1, u3, MOD);
+    z3 = mod_mul(z1, r2, MOD);
 
+    // CS2计算 z2 = (u2 - r1) * r2
+    tmp = mod_sub(u2, r1, MOD);
+    z2 = mod_mul(tmp, r2, MOD);
 
-	BN_sub(w1, x1, u1);
-	BN_sub(w2, x2, u2);
-	/*--------打包w1，w2发送给CS3-------*/
-	BN_add(tmp, w1, w2);
-	BN_add(u3, x3, tmp);
-	BN_nnmod(u3, u3, MOD, CTX);
-	BN_sub(u3, u3, MOD);
+    // 判断结果
+    tmp = mod_add(z2, z3, MOD);
 
-	// CS1和CS2生成一个共同的随机值r1
-	if (!BN_rand_range(r1, RANDOM_RANGE)) {
-		// 报错处理
-		fprintf(stderr, "Error in obtaining random values.\n");
-		return ETPSS_ERROR;
-	}
-	// CS2和CS3生成一个共同的随机值r2
-	if (!BN_rand_range(r2, RANDOM_RANGE)) {
-		// 报错处理
-		fprintf(stderr, "Error in obtaining random values.\n");
-		return ETPSS_ERROR;
-	}
-	// CS1计算u1 + r1
-	BN_add(z1, u1, r1);
-	// CS_3计算z_3=(z_1+u_3 )*α
-	BN_add(z1, z1, u3);
-	BN_mul(z3, z1, r2, CTX);
-	// CS_2计算z_2=(u_2-r)*α
-	BN_sub(tmp, u2, r1);
-	BN_mul(z2, tmp, r2, CTX);
-	/*-----------第四步-----------*/
-	int y;
-	BN_add(tmp, z2, z3);
+    if (tmp == 0) {
+        *res = -1;
+        return ETPSS_SUCCESS; // ETPSS_SUCCESS
+    }
 
-	fflush(stdout);
-	if (BN_is_zero(tmp)) {
-		// 报告x等于0
-		*res = -1;
-		return ETPSS_SUCCESS;
-	}
+    int y = (tmp < 0) ? 1 : 0;
+    if (r2 < 0) {
+        *res = y ^ 1;
+    } else {
+        *res = y ^ 0;
+    }
 
-	if (BN_is_negative(tmp)) {
-		y = 1;
-	}
-	else {
-		y = 0;
-	}
-	if (BN_is_negative(r2)) {
-		*res = y ^ 1;
-	}
-	else {
-		*res = y ^ 0;
-	}
-
-	return ETPSS_SUCCESS;
+    return ETPSS_SUCCESS; // ETPSS_SUCCESS
 }
+
 
 int et_Sub(int* ret, eTPSS* d1, eTPSS* d2) {
 	eTPSS t;
@@ -446,34 +376,22 @@ int et_Sub(int* ret, eTPSS* d1, eTPSS* d2) {
 	init_eTPSS(&t);
 	init_eTPSS(&res);
 	// 符号取反
-	BN_copy(t.CS1.x, d2->CS1.x);
-	BN_set_negative(t.CS1.x, BN_is_negative(t.CS1.x) ^ 1);
-	BN_copy(t.CS2.x, d2->CS2.x);
-	BN_set_negative(t.CS2.x, BN_is_negative(t.CS2.x) ^ 1);
-	BN_copy(t.CS3.x, d2->CS3.x);
-	BN_set_negative(t.CS3.x, BN_is_negative(t.CS3.x) ^ 1);
-	if (et_Add(&res, d1, &t) != ETPSS_SUCCESS) {
-		return ETPSS_ERROR;
-	}
+	t.CS1.x = 0 - d2->CS1.x;
+    t.CS2.x = 0 - d2->CS2.x;
+    t.CS3.x = 0 - d2->CS3.x;
 
-	BIGNUM* aaa = BN_new();
-	et_Recover(aaa, &res);
-	if (BN_is_zero(aaa)) {
+	et_Add(&res, d1, &t);
+    int64_t a;
+	et_Recover(&a, &res);
+	if ( a == 0) {
 		*ret = -1;
 	}
-	else if (BN_is_negative(aaa)) {
+	else if (a < 0) {
 		*ret = 1;
 	}
 	else {
 		*ret = 0;
 	}
-	/*if(et_judge_symbols(ret,&res) != ETPSS_SUCCESS){
-		return ETPSS_ERROR;
-	}*/
-	// 返还符号
-	/*if(et_judge_symbols(ret,&res) != ETPSS_SUCCESS){
-		return ETPSS_ERROR;
-	}*/
 	// 返还符号
 	free_eTPSS(&res);
 	free_eTPSS(&t);
@@ -481,17 +399,17 @@ int et_Sub(int* ret, eTPSS* d1, eTPSS* d2) {
 }
 
 // 计算减法的结果
-int et_Sub_cal_res(eTPSS* res, eTPSS* d1, BIGNUM* d2) {
+int et_Sub_cal_res(eTPSS* res, eTPSS* d1, int64_t d2) {
 	eTPSS t;
 
 	init_eTPSS(&t);
 	et_Share(&t, d2);
 	// 符号取反，然后进行加法
-	BN_set_negative(t.CS1.x, BN_is_negative(t.CS1.x) ^ 1);
-	BN_set_negative(t.CS2.x, BN_is_negative(t.CS2.x) ^ 1);
-	BN_set_negative(t.CS3.x, BN_is_negative(t.CS3.x) ^ 1);
+    t.CS1.x = 0 - t.CS1.x;
+    t.CS2.x = 0 - t.CS2.x;
+    t.CS3.x = 0 - t.CS3.x;
 	if (et_Add(res, d1, &t) != ETPSS_SUCCESS) {
-		return ETPSS_ERROR;
+        return ETPSS_ERROR;
 	}
 
 	free_eTPSS(&t);
@@ -499,16 +417,15 @@ int et_Sub_cal_res(eTPSS* res, eTPSS* d1, BIGNUM* d2) {
 }
 
 void et_Copy(eTPSS* d1, eTPSS* d2) {
-	BN_copy(d1->CS1.x, d2->CS1.x);
-	BN_copy(d1->CS2.x, d2->CS2.x);
-	BN_copy(d1->CS3.x, d2->CS3.x);
-	BN_copy(d1->CS1.r1, d2->CS1.r1);
-	BN_copy(d1->CS2.r1, d2->CS2.r1);
-	BN_copy(d1->CS3.r1, d2->CS3.r1);
-
-	BN_copy(d1->CS1.r2, d2->CS1.r2);
-	BN_copy(d1->CS2.r2, d2->CS2.r2);
-	BN_copy(d1->CS3.r2, d2->CS3.r2);
+	 d1->CS1.x = d2->CS1.x;
+	 d1->CS2.x = d2->CS2.x;
+	 d1->CS3.x = d2->CS3.x;
+	 d1->CS1.r1=d2->CS1.r1;
+	 d1->CS2.r1= d2->CS2.r1;
+	 d1->CS3.r1= d2->CS3.r1;
+	 d1->CS1.r2= d2->CS1.r2;
+	 d1->CS2.r2= d2->CS2.r2;
+	 d1->CS3.r2= d2->CS3.r2;
 	d1->is_multi_res = d2->is_multi_res;
 }
 
@@ -518,12 +435,10 @@ int et_Sub_cal_res_o(eTPSS* res, eTPSS* d1, eTPSS* d2) {
 	init_eTPSS(&t);
 	et_Copy(&t, d2);
 	// 符号取反，然后进行加法
-	BN_set_negative(t.CS1.x, BN_is_negative(t.CS1.x) ^ 1);
-	BN_set_negative(t.CS2.x, BN_is_negative(t.CS2.x) ^ 1);
-	BN_set_negative(t.CS3.x, BN_is_negative(t.CS3.x) ^ 1);
-	if (et_Add(res, d1, &t) != ETPSS_SUCCESS) {
-		return ETPSS_ERROR;
-	}
+    t.CS1.x = 0 - t.CS1.x;
+    t.CS2.x = 0 - t.CS2.x;
+    t.CS3.x = 0 - t.CS3.x;
+    et_Add(res, d1, &t);
 
 	free_eTPSS(&t);
 	return ETPSS_SUCCESS;

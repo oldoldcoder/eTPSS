@@ -1,8 +1,8 @@
-cmake_minimum_required(VERSION 3.25)
-project(eTPSS C)
+cmake_minimum_required(VERSION 3.28)
+project(eTPSS CXX)
 
-set(CMAKE_C_STANDARD 11)
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall")
+set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall")
 #定义两个变量，表示头文件路径和库路径
 find_package(OpenSSL REQUIRED)
 
@@ -15,12 +15,12 @@ include_directories(include)
 if(OPENSSL_FOUND)
     add_executable(${PROJECT_NAME} ${SOURCE_FILES} include/eTPSS.cpp)
 
-    add_executable(main ${SOURCE_FILES} include/eTPSS.cpp)
+    add_executable(eTPSS_test ${SOURCE_FILES} include/eTPSS.cpp)
 
     target_include_directories(${PROJECT_NAME} PUBLIC include)
-    target_include_directories(main PUBLIC include)
+    target_include_directories(eTPSS_test PUBLIC include)
     # 链接 OpenSSL 库
     target_link_libraries(${PROJECT_NAME} OpenSSL::SSL OpenSSL::Crypto)
-    target_link_libraries(main OpenSSL::SSL OpenSSL::Crypto)
+    target_link_libraries(eTPSS_test OpenSSL::SSL OpenSSL::Crypto)
 
 endif (OPENSSL_FOUND)
