@@ -489,18 +489,13 @@ void et_Copy(eTPSS* d1, eTPSS* d2) {
 }
 
 int et_Sub_cal_res_o(eTPSS* res, eTPSS* d1, eTPSS* d2) {
-	eTPSS t;
 
-	init_eTPSS(&t);
-	et_Copy(&t, d2);
-	// 符号取反，然后进行加法
-    t.CS1.x = 0 - t.CS1.x;
-    t.CS2.x = 0 - t.CS2.x;
-    t.CS3.x = 0 - t.CS3.x;
-    et_Add(res, d1, &t);
+    int64_t n1,n2;
+    et_Recover(&n1,d1);
+    et_Recover(&n2,d2);
 
-	free_eTPSS(&t);
-	return ETPSS_SUCCESS;
+    et_Share(res,n1 - n2);
+    return ETPSS_SUCCESS;
 }
 
 void free_BN_CTX() {
